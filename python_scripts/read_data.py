@@ -20,7 +20,8 @@ def lookup_headers(name):
                 'ward_number',
                 'precinct_number',
                 'precinct_label',
-                'precinct_votes'
+                'precinct_votes',
+                'error_column'
         ]
     elif name == 'cities':
         return [
@@ -28,7 +29,8 @@ def lookup_headers(name):
                 'election_type',
                 'county_code',
                 'city_code',
-                'city_description'
+                'city_description',
+                'error_column'
         ]
     elif name == 'offices':
         return [
@@ -37,12 +39,14 @@ def lookup_headers(name):
                 'office_code',
                 'district_code',
                 'status_code',
-                'office_description'
+                'office_description',
+                'error_column'
         ]
     elif name == 'counties':
         return [
                 'county_code',
-                'county_name'
+                'county_name',
+                'error_column'
         ]
     elif name == 'names':
         return [
@@ -54,7 +58,9 @@ def lookup_headers(name):
                 'candidate_id',
                 'candidate_last_name',
                 'candidate_first_name',
-                'candidate_party_name'
+                'error_column',
+                'candidate_party_name',
+                'error_column_2'
         ]
     else:
         return "ERROR"
@@ -63,10 +69,33 @@ def assign_header(df, name):
     headers = lookup_headers(name)
     if headers != "ERROR":
         df.columns = headers
+        if name == 'names':
+            del df['error_column']
+            del df['error_column_2']
+            return df
+        else:
+            del df['error_column']
+            return df
     else:
         print("%s is not a correct name" %(name))
-    return df
+        return df
 
-def build_dataframe_from_file(zip_loc,filename,name):
+def lookup_filename(year,name):
+    if name == 'votes':
+        return "%svote.txt" %(str(year))
+    elif name == 'cities':
+        return "%scity.txt" %(str(year))
+    elif name == 'offices':
+        return "%soffc.txt" %(str(year))
+    elif name == 'counties':
+        return "county.txt"
+    elif name == 'names':
+        return "%sname.txt" %(str(year))
+    else:
+        return "ERROR"
+
+def build_dataframe(year,name):
+    zip_loc = 'data/%sGEN.zip' %(str(year))
+    filename = lookup_filename(year,name)
     df = read_zip(zip_loc,filename)
     return assign_header(df,name)
