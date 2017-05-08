@@ -1,5 +1,5 @@
-from load.python_scripts.read_data import build_dataframe
-from load.python_scripts.load_data import load_all_tables, remove_duplicates
+from python_scripts.read_data import build_dataframe
+from python_scripts.load_data import load_all_tables, remove_duplicates
 
 def generate_tables(year):
     votes = build_dataframe(year, 'votes')
