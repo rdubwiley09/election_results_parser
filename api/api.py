@@ -40,8 +40,8 @@ def results(year: hug.types.text, firstName: hug.types.text, lastName: hug.types
     engine.dispose()
     return output.reset_index().to_json(orient="records")
 
-@hug.get(examples="officeType=congress&district=1")
-def history(officeType: hug.types.text, district: hug.types.text):
+@hug.get(examples="officeType=congress&district=1&zoom=total")
+def history(officeType: hug.types.text, district: hug.types.text, zoom: hug.types.text):
     """Returns the results for a given office for all years"""
     engine = create_engine(
             'postgresql://%s:%s@%s/%s' %(user,pwd,ip,user),
@@ -57,9 +57,24 @@ def history(officeType: hug.types.text, district: hug.types.text):
     totalTable = pd.read_sql(totalQuery,conn)
     resultTable = pd.merge(result, df, on = ['election_year', 'candidate_id'], how="inner")
     output = pd.merge(resultTable,totalTable, on = ['election_year', 'office_code', 'district_code', 'county_code', 'city_code', 'ward_number', 'precinct_number'], how="inner")
-    output['candidate_percentage'] = 100*output['precinct_votes']/output['total_votes']
     conn.close()
     engine.dispose()
+    if zoom == 'total':
+        filtered = output.groupby(['election_year','candidate_first_name','candidate_last_name','candidate_party_name'])['precinct_votes','total_votes'].sum()
+        output = pd.DataFrame(filtered).reset_index()
+        output = output.sort_values(by=['election_year','precinct_votes'],ascending=[0,0])
+    elif zoom == 'county':
+        filtered = output.groupby(['election_year','candidate_first_name','candidate_last_name','candidate_party_name', 'county_code'])['precinct_votes','total_votes'].sum()
+        output = pd.DataFrame(filtered).reset_index()
+        output = output.sort_values(by=['election_year', 'county_code', 'precinct_votes'],ascending=[0,1,0])
+    elif zoom == 'city':
+        filtered = output.groupby(['election_year','candidate_first_name','candidate_last_name','candidate_party_name', 'county_code', 'city_code'])['precinct_votes','total_votes'].sum()
+        output = pd.DataFrame(filtered).reset_index()
+        output = output.sort_values(by=['election_year', 'county_code', 'precinct_votes','city_code'],ascending=[0,1,1,0])
+    else:
+        output = output.sort_values(by=['election_year', 'county_code', 'precinct_votes','city_code','ward_number','precinct_number'],ascending=[0,1,1,1,0])
+    output['candidate_percentage'] = 100*output['precinct_votes']/output['total_votes']
+    output.rename(columns={'precinct_votes':'candidate_votes'})
     return output.reset_index().to_json(orient="records")
 
 @hug.get(examples="year=2016&city=Southfield")
