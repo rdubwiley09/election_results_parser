@@ -16,6 +16,7 @@ def load_table(df, tableName, replace):
 
 def load_all_tables(tableDict, replace):
     for key in tableDict.keys():
+        print("loading table %s" %(str(key)))
         load_table(tableDict[key], key, replace)
 
 def remove_duplicates(tableName):
